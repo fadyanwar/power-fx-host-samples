@@ -24,13 +24,24 @@ namespace PowerFxHostSamples
             engine.AddFunction(new ExitFunction());
         }
 
-        public static void Main()
+        public static void Main(string[] args)
         {
             ResetEngine();
 
             Console.WriteLine("Microsoft Power Fx Console Formula REPL, Version 0.2");
+
+
+            if (args.Length > 0)
+            {
+                foreach (string line in System.IO.File.ReadLines(args[0]))
+                    if (line.StartsWith('#'))
+                        continue;
+                    else ParseLine(line);
+
+                return;
+            }
+
             Console.WriteLine("Enter Excel formulas.  Use \"Help()\" for details.");
-            
             // loop
             while (true)
             {
@@ -38,53 +49,59 @@ namespace PowerFxHostSamples
                 Console.Write("\n> ");
                 var expr = Console.ReadLine();
 
-                try
+                ParseLine(expr);
+
+            }
+        }
+
+        private static void ParseLine(string expr)
+        {
+            try
+            {
+                Match match;
+
+                // variable assignment: Set( <ident>, <expr> )
+                if ((match = Regex.Match(expr, @"^\s*Set\(\s*(?<ident>\w+)\s*,\s*(?<expr>.*)\)\s*$")).Success)
                 {
-                    Match match;
-
-                    // variable assignment: Set( <ident>, <expr> )
-                    if ((match = Regex.Match(expr, @"^\s*Set\(\s*(?<ident>\w+)\s*,\s*(?<expr>.*)\)\s*$")).Success)
-                    {
-                        var r = engine.Eval(match.Groups["expr"].Value);
-                        Console.WriteLine(match.Groups["ident"].Value + ": " + PrintResult(r));
-                        engine.UpdateVariable(match.Groups["ident"].Value, r);
-                    }
-
-                    // formula definition: <ident> = <formula>
-                    else if ((match = Regex.Match(expr, @"^\s*(?<ident>\w+)\s*=(?<formula>.*)$")).Success)
-                        engine.SetFormula(match.Groups["ident"].Value, match.Groups["formula"].Value, OnUpdate);
-
-                    // eval and print everything else, unless empty lines and single line comment (which do nothing)
-                    else if (!Regex.IsMatch(expr, @"^\s*//") && Regex.IsMatch(expr, @"\w"))
-                    {
-                        var result = engine.Eval(expr);
-
-                        if (result is Microsoft.PowerFx.Core.Public.Values.ErrorValue errorValue)
-                            throw new Exception("Error: " + errorValue.Errors[0].Message);
-                        else
-                            Console.WriteLine(PrintResult(result));
-                    }
+                    var r = engine.Eval(match.Groups["expr"].Value);
+                    Console.WriteLine(match.Groups["ident"].Value + ": " + PrintResult(r));
+                    engine.UpdateVariable(match.Groups["ident"].Value, r);
                 }
-                catch (Exception e)
+
+                // formula definition: <ident> = <formula>
+                else if ((match = Regex.Match(expr, @"^\s*(?<ident>\w+)\s*=(?<formula>.*)$")).Success)
+                    engine.SetFormula(match.Groups["ident"].Value, match.Groups["formula"].Value, OnUpdate);
+
+                // eval and print everything else, unless empty lines and single line comment (which do nothing)
+                else if (!Regex.IsMatch(expr, @"^\s*//") && Regex.IsMatch(expr, @"\w"))
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(e.Message);
-                    Console.ResetColor();
+                    var result = engine.Eval(expr);
+
+                    if (result is Microsoft.PowerFx.Core.Public.Values.ErrorValue errorValue)
+                        throw new Exception("Error: " + errorValue.Errors[0].Message);
+                    else
+                        Console.WriteLine(PrintResult(result));
                 }
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message);
+                Console.ResetColor();
             }
         }
 
         static void OnUpdate(string name, FormulaValue newValue)
         {
             Console.Write($"{name}: ");
-            if( newValue is ErrorValue errorValue)
+            if (newValue is ErrorValue errorValue)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Error: " + errorValue.Errors[0].Message);
                 Console.ResetColor();
             }
             else
-                Console.WriteLine( PrintResult(newValue) );
+                Console.WriteLine(PrintResult(newValue));
         }
 
         static string PrintResult(object value)
@@ -148,13 +165,13 @@ namespace PowerFxHostSamples
             else if (value is ErrorValue errorValue)
                 resultString = "<Error: " + errorValue.Errors[0].Message + ">";
             else if (value is StringValue str)
-                resultString = "\"" + str.ToObject().ToString().Replace("\"","\"\"") + "\"";
+                resultString = "\"" + str.ToObject().ToString().Replace("\"", "\"\"") + "\"";
             else if (value is FormulaValue fv)
                 resultString = fv.ToObject().ToString();
             else
                 throw new Exception("unexpected type in PrintResult");
 
-            return(resultString);
+            return (resultString);
         }
 
         private class ResetFunction : ReflectionFunction
@@ -195,7 +212,7 @@ namespace PowerFxHostSamples
                 }
                 funcList += "  Set";
 
-                return FormulaValue.New( 
+                return FormulaValue.New(
 @"
 Set( <identifier>, <expression> ) creates or changes a variable's value.
 <identifier> = <expression> defines a formula with automatic recalc.
