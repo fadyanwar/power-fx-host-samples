@@ -20,6 +20,7 @@ namespace PowerFxHostSamples
         {
             engine = new RecalcEngine();
             engine.AddFunction(new HelpFunction());
+            engine.AddFunction(new LedMatrixPrintFunction());
             engine.AddFunction(new ResetFunction());
             engine.AddFunction(new ExitFunction());
         }
@@ -192,6 +193,17 @@ namespace PowerFxHostSamples
             public BooleanValue Execute()
             {
                 System.Environment.Exit(0);
+                return FormulaValue.New(true);
+            }
+        }
+
+        private class LedMatrixPrintFunction : ReflectionFunction
+        {
+            public LedMatrixPrintFunction() : base("LedMatrixPrint", FormulaType.Boolean, FormulaType.String) { }
+
+            public BooleanValue Execute(StringValue message)
+            {
+                Sense.Led.LedMatrix.ShowMessage(message.Value);
                 return FormulaValue.New(true);
             }
         }
