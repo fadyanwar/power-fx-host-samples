@@ -21,6 +21,7 @@ namespace PowerFxHostSamples
             engine = new RecalcEngine();
             engine.AddFunction(new HelpFunction());
             engine.AddFunction(new LedMatrixPrintFunction());
+            engine.AddFunction(new ReadTempFunction());
             engine.AddFunction(new ResetFunction());
             engine.AddFunction(new ExitFunction());
         }
@@ -205,6 +206,38 @@ namespace PowerFxHostSamples
             {
                 Sense.Led.LedMatrix.ShowMessage(message.Value);
                 return FormulaValue.New(true);
+            }
+        }
+
+        private class ReadTempFunction : ReflectionFunction
+        {
+            public ReadTempFunction() : base("ReadTemp", FormulaType.Number) { }
+
+            public NumberValue Execute()
+            {
+                using (var settings = Sense.RTIMU.RTIMUSettings.CreateDefault())
+                using (var pressure = settings.CreatePressure())
+                {
+                    var pressureReadResult = pressure.Read();
+                    return FormulaValue.New(pressureReadResult.Temperatur);
+                }
+
+            }
+        }
+
+        private class ReadPressureFunction : ReflectionFunction
+        {
+            public ReadPressureFunction() : base("ReadPressure", FormulaType.Number) { }
+
+            public NumberValue Execute()
+            {
+                using (var settings = Sense.RTIMU.RTIMUSettings.CreateDefault())
+                using (var pressure = settings.CreatePressure())
+                {
+                    var pressureReadResult = pressure.Read();
+                    return FormulaValue.New(pressureReadResult.Pressure);
+                }
+
             }
         }
 
