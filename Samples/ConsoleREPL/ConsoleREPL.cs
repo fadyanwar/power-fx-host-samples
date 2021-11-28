@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core.Public.Values;
 using Microsoft.PowerFx.Core.Public.Types;
+using Azure.Messaging.ServiceBus;
 
 namespace PowerFxHostSamples
 {
@@ -22,6 +23,7 @@ namespace PowerFxHostSamples
             engine.AddFunction(new HelpFunction());
             engine.AddFunction(new LedMatrixPrintFunction());
             engine.AddFunction(new ReadTempFunction());
+            engine.AddFunction(new SendMessageFunction());
             engine.AddFunction(new ResetFunction());
             engine.AddFunction(new ExitFunction());
         }
@@ -240,6 +242,23 @@ namespace PowerFxHostSamples
 
             }
         }
+
+        private class SendMessageFunction : ReflectionFunction
+        {
+            public SendMessageFunction() : base("SendMessage", FormulaType.Boolean, FormulaType.String, FormulaType.String, FormulaType.String) { }
+
+            public BooleanValue Execute(StringValue connectionString, StringValue queueName, StringValue messageText)
+            {
+                var client = new ServiceBusClient(connectionString.Value);
+
+                ServiceBusSender sender = client.CreateSender(queueName.Value);
+                ServiceBusMessage message = new ServiceBusMessage(messageText.Value);
+
+                sender.SendMessageAsync(message);
+                return FormulaValue.New(true);
+            }
+        }
+
 
         private class HelpFunction : ReflectionFunction
         {
