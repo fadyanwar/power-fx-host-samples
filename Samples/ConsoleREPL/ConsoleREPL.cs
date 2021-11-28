@@ -23,7 +23,6 @@ namespace PowerFxHostSamples
             engine.AddFunction(new HelpFunction());
             engine.AddFunction(new LedMatrixPrintFunction());
             engine.AddFunction(new ReadTempFunction());
-            engine.AddFunction(new SendMessageFunction());
             engine.AddFunction(new ResetFunction());
             engine.AddFunction(new ExitFunction());
         }
