@@ -10,6 +10,9 @@ using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core.Public.Values;
 using Microsoft.PowerFx.Core.Public.Types;
 using Azure.Messaging.ServiceBus;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace PowerFxHostSamples
 {
@@ -23,6 +26,8 @@ namespace PowerFxHostSamples
             engine.AddFunction(new HelpFunction());
             engine.AddFunction(new LedMatrixPrintFunction());
             engine.AddFunction(new ReadTempFunction());
+            engine.AddFunction(new WhereIsSanta());
+            engine.AddFunction(new SendMessageFunction());
             engine.AddFunction(new ResetFunction());
             engine.AddFunction(new ExitFunction());
         }
@@ -242,6 +247,28 @@ namespace PowerFxHostSamples
             }
         }
 
+        private class WhereIsSanta : ReflectionFunction
+        {
+            public WhereIsSanta() : base("WhereIsSanta", FormulaType.String) { }
+
+            public StringValue Execute()
+            {
+
+                using (var client = new HttpClient())
+                {
+                    string santaTracker = "https://santa-api.appspot.com/info?client=web";
+               
+                    var task = Task.Run(() => client.GetStringAsync(santaTracker));
+                    task.Wait();
+                    var response = task.Result;
+                    dynamic data = JObject.Parse(response);
+                    return FormulaValue.New("Santa's Current Location is " + data.location);
+
+                }
+
+            }
+        }
+
         private class SendMessageFunction : ReflectionFunction
         {
             public SendMessageFunction() : base("SendMessage", FormulaType.Boolean, FormulaType.String, FormulaType.String, FormulaType.String) { }
@@ -257,6 +284,7 @@ namespace PowerFxHostSamples
                 return FormulaValue.New(true);
             }
         }
+
 
 
         private class HelpFunction : ReflectionFunction

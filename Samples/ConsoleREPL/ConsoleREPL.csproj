@@ -9,6 +9,7 @@
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.5.0" />
     <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.1-preview" />
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="0.2.1-preview" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="SenseHatNet" Version="0.0.7" />
   </ItemGroup>
 
